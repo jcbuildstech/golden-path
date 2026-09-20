@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 
 set "TEMPLATE=C:\Users\jcdel\Root\03_RESOURCES\06_GOLDEN_PATH\template"
 set "TARGET=%~dp0."
@@ -11,6 +11,9 @@ set "COOLIFY_GITHUB_APP_UUID=ugwgsgowsgskc4w40ws4s0sc"
 for %%I in ("%TARGET%") do set "PROJECT_NAME=%%~nxI"
 
 set "REPO=%GITHUB_OWNER%/%PROJECT_NAME%"
+set "DATABASE_NAME=%PROJECT_NAME%-postgres"
+set "DATABASE_WAS_CREATED=0"
+set "DB_PASSWORD="
 
 set "JSON_FILE=%TEMP%\golden_path_%RANDOM%_data.json"
 set "RESULT_FILE=%TEMP%\golden_path_%RANDOM%_result.txt"
@@ -121,6 +124,83 @@ if not defined COOLIFY_PROJECT_UUID (
 )
 
 rem --------------------------------------------------
+rem Find or create Coolify PostgreSQL
+rem --------------------------------------------------
+
+echo Creating production PostgreSQL...
+
+coolify database list --format json > "%JSON_FILE%"
+
+if ERRORLEVEL 1 (
+    echo.
+    echo ERROR: Could not read Coolify databases.
+    pause
+    exit /b 1
+)
+
+powershell -NoProfile -Command "$databases = Get-Content -Raw $env:JSON_FILE | ConvertFrom-Json; $match = $databases | Where-Object { $_.name -eq $env:DATABASE_NAME -and $_.type -eq 'postgresql' } | Select-Object -First 1; if ($match) { [IO.File]::WriteAllText($env:RESULT_FILE,[string]$match.uuid) } else { [IO.File]::WriteAllText($env:RESULT_FILE,'NONE') }"
+
+if ERRORLEVEL 1 (
+    echo.
+    echo ERROR: Could not inspect Coolify databases.
+    pause
+    exit /b 1
+)
+
+set /p COOLIFY_DB_UUID=<"%RESULT_FILE%"
+
+if "%COOLIFY_DB_UUID%"=="NONE" (
+    powershell -NoProfile -Command "[IO.File]::WriteAllText($env:RESULT_FILE,([guid]::NewGuid().ToString('N') + [guid]::NewGuid().ToString('N')))"
+
+    if ERRORLEVEL 1 (
+        echo.
+        echo ERROR: Could not generate PostgreSQL password.
+        pause
+        exit /b 1
+    )
+
+    set /p DB_PASSWORD=<"%RESULT_FILE%"
+
+    coolify database create postgresql ^
+        --server-uuid "%COOLIFY_SERVER_UUID%" ^
+        --project-uuid "%COOLIFY_PROJECT_UUID%" ^
+        --environment-name production ^
+        --name "%DATABASE_NAME%" ^
+        --image "postgres:17-alpine" ^
+        --postgres-user "app" ^
+        --postgres-password "!DB_PASSWORD!" ^
+        --postgres-db "app" ^
+        --instant-deploy ^
+        --format json > "%JSON_FILE%"
+
+    if ERRORLEVEL 1 (
+        echo.
+        echo ERROR: Production PostgreSQL creation failed.
+        pause
+        exit /b 1
+    )
+
+    powershell -NoProfile -Command "$data = Get-Content -Raw $env:JSON_FILE | ConvertFrom-Json; [IO.File]::WriteAllText($env:RESULT_FILE,[string]$data.uuid)"
+
+    if ERRORLEVEL 1 (
+        echo.
+        echo ERROR: Could not read new PostgreSQL UUID.
+        pause
+        exit /b 1
+    )
+
+    set /p COOLIFY_DB_UUID=<"%RESULT_FILE%"
+    set "DATABASE_WAS_CREATED=1"
+)
+
+if not defined COOLIFY_DB_UUID (
+    echo.
+    echo ERROR: Could not determine PostgreSQL UUID.
+    pause
+    exit /b 1
+)
+
+rem --------------------------------------------------
 rem Find or create Coolify application
 rem --------------------------------------------------
 
@@ -183,6 +263,59 @@ if not defined COOLIFY_APP_UUID (
     pause
     exit /b 1
 )
+
+rem --------------------------------------------------
+rem Wire production PostgreSQL to Web application
+rem --------------------------------------------------
+
+coolify app env list "%COOLIFY_APP_UUID%" --format json > "%JSON_FILE%"
+
+if ERRORLEVEL 1 (
+    echo.
+    echo ERROR: Could not read Coolify application environment variables.
+    pause
+    exit /b 1
+)
+
+powershell -NoProfile -Command "$vars = Get-Content -Raw $env:JSON_FILE | ConvertFrom-Json; $match = $vars | Where-Object { $_.key -eq 'DATABASE_URL' } | Select-Object -First 1; if ($match) { [IO.File]::WriteAllText($env:RESULT_FILE,'EXISTS') } else { [IO.File]::WriteAllText($env:RESULT_FILE,'NONE') }"
+
+if ERRORLEVEL 1 (
+    echo.
+    echo ERROR: Could not inspect Coolify application environment variables.
+    pause
+    exit /b 1
+)
+
+set /p DATABASE_URL_STATE=<"%RESULT_FILE%"
+
+if "%DATABASE_URL_STATE%"=="NONE" (
+    if "%DATABASE_WAS_CREATED%"=="0" (
+        echo.
+        echo ERROR: Existing PostgreSQL found but DATABASE_URL is missing.
+        echo Cannot safely reconstruct its password automatically.
+        pause
+        exit /b 1
+    )
+
+    set "DATABASE_URL=postgresql://app:%DB_PASSWORD%@%COOLIFY_DB_UUID%:5432/app"
+
+    coolify app env create "%COOLIFY_APP_UUID%" ^
+        --key "DATABASE_URL" ^
+        --value "!DATABASE_URL!" ^
+        --is-literal ^
+        --build-time=false ^
+        --runtime=true >nul
+
+    if ERRORLEVEL 1 (
+        echo.
+        echo ERROR: Could not wire DATABASE_URL to Coolify application.
+        pause
+        exit /b 1
+    )
+)
+
+set "DB_PASSWORD="
+set "DATABASE_URL="
 
 del "%JSON_FILE%" >nul 2>&1
 del "%RESULT_FILE%" >nul 2>&1

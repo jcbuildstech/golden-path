@@ -1,13 +1,15 @@
 {
     "name": "Python Golden Path",
 
-    "build": {
-        "dockerfile": "Dockerfile",
-        "context": ".."
+    "dockerComposeFile": "compose.yaml",
+    "service": "dev",
+    "workspaceFolder": "/workspace",
+    "shutdownAction": "stopCompose",
+
+    "features": {
+        "ghcr.io/devcontainers/features/github-cli:1": {}
     },
-"features": {
-    "ghcr.io/devcontainers/features/github-cli:1": {}
-},
+
     "containerEnv": {
         "UV_PROJECT_ENVIRONMENT": "/home/vscode/.venv"
     },
