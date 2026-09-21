@@ -2,13 +2,35 @@
 setlocal EnableExtensions EnableDelayedExpansion
 
 set "TEMPLATE=C:\Users\jcdel\Root\03_RESOURCES\06_GOLDEN_PATH\template"
-set "TARGET=%~dp0."
+set "OUTER_FOLDER=%~dp0"
 
 set "GITHUB_OWNER=jcbuildstech"
 set "COOLIFY_SERVER_UUID=ew0ckwcs444o4c0s4s0000so"
 set "COOLIFY_GITHUB_APP_UUID=ugwgsgowsgskc4w40ws4s0sc"
 
-for %%I in ("%TARGET%") do set "PROJECT_NAME=%%~nxI"
+:ASK_PROJECT_NAME
+echo.
+set "PROJECT_NAME="
+set /p "PROJECT_NAME=Project name: "
+
+powershell -NoProfile -Command "if ($env:PROJECT_NAME -match '^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$') { exit 0 } else { exit 1 }"
+
+if ERRORLEVEL 1 (
+    echo.
+    echo Invalid project name.
+    echo Use lowercase letters, numbers and hyphens only.
+    echo Do not start or end with a hyphen.
+    echo Maximum length: 63 characters.
+    echo.
+    echo Example: qld-traffic-monitor
+    goto ASK_PROJECT_NAME
+)
+
+set "TARGET=%OUTER_FOLDER%%PROJECT_NAME%"
+
+if not exist "%TARGET%" (
+    mkdir "%TARGET%"
+)
 
 set "REPO=%GITHUB_OWNER%/%PROJECT_NAME%"
 set "DATABASE_NAME=%PROJECT_NAME%-postgres"
