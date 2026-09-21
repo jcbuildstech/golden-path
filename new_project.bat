@@ -35,6 +35,7 @@ if not exist "%TARGET%" (
 set "REPO=%GITHUB_OWNER%/%PROJECT_NAME%"
 set "DATABASE_NAME=%PROJECT_NAME%-postgres"
 set "WORKER_NAME=%PROJECT_NAME%-worker"
+set "PROJECT_URL=https://%PROJECT_NAME%.jcdelgado.dev"
 set "DATABASE_WAS_CREATED=0"
 set "DB_PASSWORD="
 
@@ -283,6 +284,22 @@ if "%COOLIFY_APP_UUID%"=="NONE" (
 if not defined COOLIFY_APP_UUID (
     echo.
     echo ERROR: Could not determine Coolify application UUID.
+    pause
+    exit /b 1
+)
+
+rem --------------------------------------------------
+rem Configure public project domain
+rem --------------------------------------------------
+
+echo Configuring public domain...
+
+coolify app update "%COOLIFY_APP_UUID%" ^
+    --domains "%PROJECT_URL%" >nul
+
+if ERRORLEVEL 1 (
+    echo.
+    echo ERROR: Could not configure public project domain.
     pause
     exit /b 1
 )
