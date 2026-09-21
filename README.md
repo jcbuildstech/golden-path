@@ -1,69 +1,54 @@
 # Juan's Python Golden Path
 
-A deliberately small personal development and deployment path for Python projects.
+A deliberately small personal path for going from an idea to a working Python product without repeatedly rebuilding development and deployment infrastructure.
 
 ## Mission
 
-> **Build the smallest personal golden path that lets me safely AND COMFORTABLY develop and ship what I know today in roughly 30 minutes, and improve the path only when real projects expose friction.**
+> **Build the smallest personal Golden Path that lets me safely and comfortably develop and ship what I know today in roughly 30 minutes, and improve the path only when real projects expose friction.**
 
-This is not meant to become a framework, platform, or DevOps hobby project. Its purpose is to reduce repeated setup and deployment friction so the focus stays on building actual projects.
+The Golden Path exists to remove repeated infrastructure work.
+
+It does not replace the actual work of designing, understanding, coding, debugging, testing, and improving a product.
+
+Speed is currently more valuable than repeatedly reconsidering infrastructure that has already been solved.
 
 ---
 
-# 1. Current Status
+# 1. Current State
 
-## Web Golden Path — PROVEN END TO END
+## Golden Path v2 — PROVEN END TO END
 
-As of September 2026, the Web path has been tested from a completely empty project through to a live deployment.
-
-The proven flow is:
+The current default project architecture is:
 
 ```text
-Create project folder
-    ↓
-Copy new_project.bat into the folder
-    ↓
-Run new_project.bat
-    ↓
-Golden Path template copied
-    ↓
-Local Git repository created
-    ↓
-Private GitHub repository created
-    ↓
-Coolify project created
-    ↓
-Coolify application created and connected
-    ↓
-Open project in VS Code
-    ↓
-Reopen in Dev Container
-    ↓
-Write code
-    ↓
-git commit
-    ↓
-git push
-    ↓
-Coolify automatically detects push
-    ↓
-Builds on OCI ARM64
-    ↓
-Application becomes live
+                         Product
+                            |
+             +--------------+--------------+
+             |              |              |
+            Web          Worker        PostgreSQL
+             |              |              |
+             +--------------+--------------+
+                            |
+                         Coolify
+                            |
+              https://<project>.jcdelgado.dev
 ```
 
-The normal development loop is now:
+The same project also receives a local development stack:
 
 ```text
 VS Code Dev Container
-→ code
-→ test
-→ git add / commit
-→ git push
-→ Coolify automatically redeploys
+        |
+        +---- Web
+        |
+        +---- Worker
+        |
+        +---- PostgreSQL
 ```
 
-No manual Coolify setup is required after project creation.
+The infrastructure is provisioned before the product logic is written.
+
+The actual application remains a blank canvas.
 
 ---
 
@@ -75,7 +60,7 @@ Local source:
 C:\Users\jcdel\Root\03_RESOURCES\06_GOLDEN_PATH
 ```
 
-Private GitHub backup:
+GitHub backup:
 
 ```text
 https://github.com/jcbuildstech/golden-path
@@ -85,180 +70,193 @@ Current structure:
 
 ```text
 06_GOLDEN_PATH
-├── new_project.bat
-├── README.md
-└── template
-    ├── .devcontainer
-    │   ├── Dockerfile
-    │   └── devcontainer.json
-    ├── .vscode
-    │   └── settings.json
-    ├── .gitattributes
-    └── .gitignore
+|-- new_project.bat
+|-- README.md
+`-- template
+    |-- .devcontainer
+    |   |-- Dockerfile
+    |   |-- compose.yaml
+    |   `-- devcontainer.json
+    |-- .vscode
+    |   `-- settings.json
+    |-- .gitattributes
+    `-- .gitignore
 ```
 
-Fresh projects later generate additional files such as:
-
-```text
-pyproject.toml
-uv.lock
-.devcontainer/devcontainer-lock.json
-```
+The template deliberately does not contain a starter application.
 
 ---
 
-# 3. Current Scope
+# 3. Normal Project Creation
 
-The current `new_project.bat` is a **Web-project Golden Path**.
+The outer folder belongs to the PARA organisation system.
 
-Current assumptions:
+Example:
 
 ```text
-Language:       Python
-Python:         3.12
-Dependency mgr: uv
-Build system:   Nixpacks
-Entry point:    python main.py
-Web port:       8000
-Git branch:     main
-GitHub:         private repository
-Deployment:     Coolify
-Server:         OCI ARM64
+C:\Users\jcdel\Root\01_PROJECTS\15_some_new_idea
 ```
 
-A Web project must eventually listen on:
+Copy:
 
 ```text
-0.0.0.0:8000
+new_project.bat
 ```
 
-unless the Golden Path is intentionally changed.
+into that outer folder and double-click it.
 
-The current batch does **not** yet support Worker or Job project types.
-
----
-
-# 4. Program-Type Mental Model
-
-The important distinction is not “what framework is this?” but:
-
-1. What starts the program?
-2. Does it stay alive or exit?
-3. What is it waiting for?
-
-Common runtime shapes:
-
-## Web
+The batch asks:
 
 ```text
-starts
-→ stays alive
-→ waits for HTTP requests
-```
-
-Examples:
-
-- Flask
-- FastAPI
-- Django
-- REST API
-- backend service
-
-## Worker
-
-```text
-starts
-→ stays alive
-→ performs background work
+Project name:
 ```
 
 Example:
 
-```python
-while True:
-    check_traffic()
-    send_notifications()
-    sleep(...)
+```text
+traffic-monitor
 ```
 
-The QLD traffic notification system is naturally shaped like a Worker.
-
-A Worker normally needs:
+The result is:
 
 ```text
-no public port
-no public URL
-no Traefik route
+15_some_new_idea
+|-- new_project.bat
+`-- traffic-monitor
+    |-- .devcontainer
+    |-- .vscode
+    |-- .gitattributes
+    `-- .gitignore
 ```
 
-It may still make outgoing API calls.
+The outer folder can use whatever PARA naming convention is useful.
 
-## Job
-
-```text
-starts
-→ performs work
-→ exits
-```
-
-Examples:
-
-- daily report
-- cleanup script
-- periodic importer
-- scheduled data task
-
-Job support has not yet been implemented because no real project has required it.
+The inner project name is the permanent machine identity.
 
 ---
 
-# 5. One Product Can Contain Multiple Processes
+# 4. Project Name Rules
 
-Do not confuse:
+Project names are validated before anything is created.
 
-```text
-project
-process
-repository
-```
-
-They are not the same thing.
-
-A future product might look like:
+Allowed:
 
 ```text
-Fantasy League
-├── business logic
-├── API / web process
-├── worker process
-├── scheduled job
-└── frontend
+qld-traffic-monitor
+weather-alerts
+project2
+my-api
 ```
 
-These can initially live in one repository.
+Rejected:
 
-Do not split into separate repositories unless a real reason appears, such as:
+```text
+QLD-Traffic
+qld_traffic
+qld traffic
+-project
+project-
+```
 
-- independent release cycles
-- independent teams
-- radically different scaling
-- one component becoming independently reusable
+Rules:
 
-For a solo developer, splitting too early creates unnecessary Git, deployment, config, auth, and mental overhead.
+```text
+lowercase letters
+numbers
+hyphens
+maximum 63 characters
+cannot start with a hyphen
+cannot end with a hyphen
+```
+
+The same name is used consistently for GitHub, Coolify and the public hostname.
+
+Example:
+
+```text
+Project:
+traffic-monitor
+
+GitHub:
+jcbuildstech/traffic-monitor
+
+Coolify project:
+traffic-monitor
+
+Web:
+traffic-monitor
+
+Worker:
+traffic-monitor-worker
+
+Database:
+traffic-monitor-postgres
+
+Production:
+https://traffic-monitor.jcdelgado.dev
+```
 
 ---
 
-# 6. Development Environment
+# 5. What new_project.bat Creates
 
-## Python
+Running the batch creates or reuses:
 
-The Golden Path now standardises on:
+```text
+1. Internal project folder
+2. Golden Path template
+3. Local Git repository
+4. Repository-local Git identity
+5. Private GitHub repository
+6. GitHub origin
+7. Coolify project
+8. Production PostgreSQL database
+9. Coolify Web application
+10. Web DATABASE_URL
+11. Coolify Worker application
+12. Worker DATABASE_URL
+13. Permanent public Web hostname
+    https://<project>.jcdelgado.dev
+```
+
+Resources are looked up before creation.
+
+Rerunning the batch is designed to reuse existing infrastructure instead of duplicating it.
+
+---
+
+# 6. Proven Idempotency
+
+The complete stack was created and then the same batch was run again with the same project name.
+
+Verified result:
+
+```text
+Projects:  1
+Databases: 1
+Web apps:  1
+Workers:   1
+```
+
+This is important.
+
+Do not remove lookup/reuse logic casually.
+
+---
+
+# 7. Development Environment
+
+The development container uses:
 
 ```text
 Python 3.12
+uv
+VS Code Dev Containers
+Docker Compose
+PostgreSQL 17
 ```
 
-Current Dockerfile:
+Dockerfile:
 
 ```dockerfile
 FROM mcr.microsoft.com/devcontainers/python:3-3.12-trixie
@@ -266,402 +264,79 @@ FROM mcr.microsoft.com/devcontainers/python:3-3.12-trixie
 COPY --from=ghcr.io/astral-sh/uv:0.12.13 /uv /uvx /bin/
 ```
 
-The Dev Container was tested with:
-
-```text
-Python 3.12.14
-```
+Python 3.12 was deliberately chosen because development and Coolify/Nixpacks production need compatible Python versions.
 
 ---
 
-# 7. Why Python 3.12 Was Chosen
+# 8. Local PostgreSQL
 
-The Golden Path originally used Python 3.14.
+PostgreSQL is automatically started beside the Dev Container using Docker Compose.
 
-That caused `uv init` to create:
-
-```toml
-requires-python = ">=3.14"
-```
-
-Coolify/Nixpacks on OCI provided Python 3.12.
-
-Deployment then failed with:
-
-```text
-error: No interpreter found for Python >=3.14
-```
-
-The fix was made at the Golden Path source instead of patching individual projects.
-
-Fresh projects now generate:
-
-```toml
-requires-python = ">=3.12"
-```
-
-Important lesson:
-
-> Development and production Python versions should be deliberately aligned.
-
----
-
-# 8. Dependency Management
-
-The Golden Path uses:
-
-```text
-uv
-```
-
-The intended dependency workflow is:
-
-```bash
-uv add requests
-```
-
-rather than:
-
-```bash
-pip install requests
-```
-
-`uv` maintains:
-
-```text
-pyproject.toml
-uv.lock
-```
-
-The Dev Container restores dependencies automatically with `uv sync`.
-
----
-
-# 9. Virtual Environment Design
-
-The virtual environment deliberately lives inside the Linux container filesystem:
-
-```text
-/home/vscode/.venv
-```
-
-Not inside the Windows-mounted project directory.
-
-Configured with:
-
-```text
-UV_PROJECT_ENVIRONMENT=/home/vscode/.venv
-```
-
-VS Code interpreter:
-
-```text
-/home/vscode/.venv/bin/python
-```
-
-Reason:
-
-The project folder lives on Windows NTFS and is mounted into Linux.
-
-Keeping `.venv` inside the mounted project previously caused deletion and filesystem friction.
-
-The Linux-side environment is disposable.
-
-If lost:
-
-```bash
-uv sync
-```
-
-rebuilds it from:
-
-```text
-pyproject.toml
-uv.lock
-```
-
----
-
-# 10. Persistent-State Lesson
-
-A previous project exposed an important filesystem rule.
-
-SQLite WAL mode behaved badly on the Windows-mounted NTFS project filesystem.
-
-The traffic project therefore moved its working database to native Linux storage:
-
-```text
-/home/vscode/.local/share/accident_notification/traffic.db
-```
-
-Lesson:
-
-> Source code can live in the Windows-mounted project directory. Runtime state that depends on Linux filesystem semantics should live on native Linux storage or a proper volume.
-
-The Golden Path does not currently impose a database architecture.
-
-Add one only when a real project needs it.
-
----
-
-# 11. Git Configuration
-
-Each project receives repository-local Git identity:
-
-```text
-user.name  = Juan Delgado Vivas
-user.email = jcbuildstech@gmail.com
-```
-
-Also configured:
-
-```text
-push.autoSetupRemote = true
-```
-
-This lets the first:
-
-```bash
-git push
-```
-
-set upstream automatically.
-
----
-
-# 12. Git Safe Directory Fix
-
-Windows-mounted repositories inside Dev Containers can appear to Git as having suspicious ownership.
-
-This previously caused:
-
-```text
-fatal: detected dubious ownership in repository
-```
-
-The Dev Container setup fixes the current project dynamically:
-
-```bash
-git config --global --add safe.directory "$(pwd)"
-```
-
-Do not replace this with:
-
-```text
-safe.directory *
-```
-
-because that would disable the safety mechanism globally.
-
----
-
-# 13. GitHub
-
-GitHub account:
-
-```text
-jcbuildstech
-```
-
-Professional email:
-
-```text
-jcbuildstech@gmail.com
-```
-
-Projects are created as:
-
-```text
-PRIVATE GitHub repositories
-```
-
-by default.
-
-A project can later be made public manually if it becomes portfolio-worthy.
-
-The Golden Path never stores GitHub tokens in source.
-
-Authentication lives in Windows credential storage through GitHub CLI.
-
----
-
-# 14. GitHub Credentials in Dev Containers
-
-`gh auth status` inside a Dev Container may say GitHub CLI is not logged in.
-
-That is okay.
-
-VS Code Dev Containers forward Git credentials from the Windows host.
-
-This was explicitly tested:
-
-```bash
-git push
-```
-
-worked from inside the container without:
-
-- browser login
-- token entry
-- PowerShell
-- `gh auth login` inside the container
-
-Normal workflow therefore remains:
+Architecture:
 
 ```text
 Dev Container
-→ git commit
-→ git push
+      |
+      | DATABASE_URL
+      v
+PostgreSQL container
 ```
+
+Inside the development container the hostname is:
+
+```text
+postgres
+```
+
+The local connection string is supplied automatically:
+
+```text
+postgresql://app:local_dev_only@postgres:5432/app
+```
+
+The local database does not need a Windows port, manual startup, or manual `DATABASE_URL` configuration.
+
+The Dev Container waits for PostgreSQL to become healthy.
+
+The PostgreSQL data lives in a Docker volume.
 
 ---
 
-# 15. Coolify
+# 9. Production PostgreSQL
 
-Coolify runs on Juan's OCI server.
-
-Current deployment server UUID:
+The batch automatically creates:
 
 ```text
-ew0ckwcs444o4c0s4s0000so
+PostgreSQL 17
+database: app
+user: app
 ```
 
-Coolify identifies the server as:
+A strong random database password is generated during project creation.
+
+The password is not committed to Git.
+
+The returned Coolify database UUID is used as the internal database hostname.
+
+Production connection shape:
 
 ```text
-localhost
+postgresql://app:<generated-password>@<database-uuid>:5432/app
 ```
 
-The UUID is an identifier, not a secret.
+The resulting `DATABASE_URL` is injected into both Web and Worker as a runtime environment variable.
+
+Coolify hides the value in normal output.
 
 ---
 
-# 16. Coolify CLI
+# 10. Web Application
 
-Official Coolify CLI is installed on Windows.
-
-Version used during Golden Path development:
+The Web Coolify application uses:
 
 ```text
-1.8.0
-```
-
-Configured context:
-
-```text
-production
-```
-
-Connectivity can be checked with:
-
-```powershell
-coolify context verify
-```
-
-The Coolify API token is stored in the CLI context.
-
-Never put the token inside `new_project.bat`.
-
----
-
-# 17. Coolify GitHub App
-
-Current GitHub App UUID used by the Golden Path:
-
-```text
-ugwgsgowsgskc4w40ws4s0sc
-```
-
-GitHub App name:
-
-```text
-weary-wolf-ocs40484c44s848wwc0
-```
-
-Repository access was changed to:
-
-```text
-All repositories
-```
-
-This matters because if access were restricted to selected repositories, every new Golden Path project would require manual GitHub permission changes and the automation would stop being useful.
-
----
-
-# 18. Coolify GitHub CLI/API Quirk
-
-A CLI/API mismatch was discovered.
-
-This command:
-
-```powershell
-coolify github repos ugwgsgowsgskc4w40ws4s0sc
-```
-
-failed because the server attempted to interpret the GitHub App UUID as a PostgreSQL bigint.
-
-`coolify github list --format json` showed:
-
-```text
-weary-wolf internal id: 1
-UUID: ugwgsgowsgskc4w40ws4s0sc
-```
-
-This command worked:
-
-```powershell
-coolify github repos 1
-```
-
-Important:
-
-The application creation command itself **does** correctly accept the GitHub App UUID:
-
-```text
-ugwgsgowsgskc4w40ws4s0sc
-```
-
-Do not replace it with numeric `1` in `new_project.bat` unless the API changes and is re-tested.
-
----
-
-# 19. Coolify Project Strategy
-
-Golden Path decision:
-
-> **One shipped idea = one Coolify project.**
-
-Do not put every unrelated Golden Path app inside one giant Coolify project.
-
-The desired mental organisation is:
-
-```text
-fantasy_league
-traffic_notifier
-expense_analyser
-next_idea
-```
-
-A single Coolify project may later contain more than one runtime resource if the product needs it.
-
-Example:
-
-```text
-Fantasy League Coolify Project
-├── API
-├── Worker
-└── Database
-```
-
----
-
-# 20. Web Deployment Configuration
-
-The current Web Golden Path creates a Coolify application using:
-
-```text
-Git repository:
-jcbuildstech/<project_name>
+Repository:
+jcbuildstech/<project>
 
 Branch:
 main
@@ -674,151 +349,460 @@ Port:
 
 Start command:
 python main.py
-
-Environment:
-production
 ```
 
-The batch deliberately does **not** use:
+A Web application must listen on:
 
 ```text
---instant-deploy
+0.0.0.0:8000
+```
+
+unless the Golden Path is deliberately changed.
+
+The Web application receives `DATABASE_URL` automatically.
+
+---
+
+# 11. Worker Application
+
+Each project also receives a Worker application.
+
+Configuration:
+
+```text
+Repository:
+same repository as Web
+
+Branch:
+main
+
+Build pack:
+nixpacks
+
+Port:
+8001
+
+Start command:
+python worker.py
+```
+
+The Worker receives the same production `DATABASE_URL` as the Web application.
+
+A worker normally does not need HTTP traffic.
+
+Coolify currently generates an `sslip.io` URL for it anyway. That is accepted for this Golden Path because it adds no meaningful friction and the Worker does not need to serve anything.
+
+If a future project becomes important enough to care, the generated Worker domain can be removed manually in Coolify.
+
+Do not complicate the Golden Path solely to remove that harmless URL.
+
+---
+
+# 12. One Repository, Multiple Processes
+
+The default mental model is:
+
+```text
+one product
+one repository
+
+Coolify project
+|-- Web
+|-- Worker
+`-- PostgreSQL
+```
+
+Project, repository and process are not the same thing.
+
+The Web and Worker intentionally use the same Git repository.
+
+They differ by start command:
+
+```text
+Web:
+python main.py
+
+Worker:
+python worker.py
+```
+
+Do not split projects into multiple repositories without a real reason.
+
+---
+
+# 13. Public Domain
+
+Cloudflare contains a wildcard DNS record:
+
+```text
+*.jcdelgado.dev
+```
+
+pointing to:
+
+```text
+140.238.198.91
+```
+
+with:
+
+```text
+DNS only
+```
+
+This was configured once.
+
+Because project names are hostname-safe, every future project automatically resolves:
+
+```text
+<project>.jcdelgado.dev
+```
+
+No per-project Cloudflare DNS work is normally required.
+
+The batch assigns the Web application:
+
+```text
+https://<project>.jcdelgado.dev
 ```
 
 during creation.
 
 ---
 
-# 21. Why the Batch Does Not Deploy Immediately
+# 14. HTTPS / TLS
 
-A key behaviour was explicitly tested.
+A project receives its permanent HTTPS hostname before application code exists.
 
-Coolify can be connected to a completely empty GitHub repository before that repository has any commits.
+The proven sequence is:
 
-Then the first:
+```text
+new_project.bat
+-> custom HTTPS hostname assigned
+-> write application
+-> first git push
+-> Coolify deploys
+-> manually redeploy Web once
+-> trusted TLS certificate is issued
+```
+
+The one manual Web redeploy is currently accepted.
+
+It is tiny friction compared with making the Golden Path more complicated or forcing placeholder application code into every new project.
+
+A successful test with:
+
+```powershell
+curl.exe https://<project>.jcdelgado.dev
+```
+
+without `-k` proves the certificate is trusted.
+
+---
+
+# 15. Why There Is No Starter Application
+
+The Golden Path deliberately creates infrastructure but not product logic.
+
+It does not automatically create:
+
+```text
+main.py
+worker.py
+database schema
+tables
+routes
+business logic
+UI
+```
+
+This is intentional.
+
+A starter application could bias the shape of disposable experiments, learning projects and creative projects.
+
+The Golden Path should provide capability, not prescribe the solution.
+
+After opening the project, the first meaningful task should be:
+
+> What does this product actually do?
+
+---
+
+# 16. Normal Development Loop
+
+After project creation, normal work happens inside the Dev Container:
+
+```text
+write code
+-> test locally
+-> git add
+-> git commit
+-> git push
+```
+
+GitHub push automatically triggers both Coolify applications.
+
+Typical commands:
+
+```bash
+git status
+git add .
+git commit -m "Add feature"
+git push
+```
+
+Routine development should not require manually recreating infrastructure.
+
+---
+
+# 17. First Push
+
+The GitHub repository is intentionally allowed to begin empty.
+
+Coolify can be connected before the repository has its first commit.
+
+The first real:
 
 ```bash
 git push
 ```
 
-automatically triggers the first deployment.
+becomes the first deployment.
 
-This was proven using:
-
-```text
-12_first_push_test
-```
-
-Sequence:
+This avoids:
 
 ```text
-empty GitHub repo
-→ Coolify project created
-→ Coolify app created
-→ no deployment
-→ first commit
-→ first git push
-→ Coolify webhook triggered
-→ deployment finished
-→ live application worked
+placeholder commits
+fake starter code
+dummy applications
+unnecessary first deployments
 ```
 
-Therefore the Golden Path does not need:
-
-- placeholder commits
-- dummy deployments
-- manual first deploy
-- fake starter code
+The project begins with the actual thing being built.
 
 ---
 
-# 22. Auto Deploy
+# 18. Proven Full Architecture
 
-Coolify auto-deploy from GitHub is proven.
+The Golden Path was tested with a real end-to-end heartbeat application.
 
-Test:
+Local test:
 
 ```text
-edit main.py
-→ git commit
-→ git push
+Worker
+  |
+  | writes heartbeat
+  v
+PostgreSQL
+  ^
+  | reads heartbeat
+  |
+Web
+  |
+  v
+Browser
 ```
 
-Coolify automatically created and completed a deployment for the new commit.
+Production test:
 
-The live app then served the updated output.
+```text
+Coolify Worker
+      |
+      | DATABASE_URL
+      v
+Coolify PostgreSQL
+      ^
+      | DATABASE_URL
+      |
+Coolify Web
+      |
+      v
+HTTPS
+```
 
-The intended normal deployment workflow is therefore simply:
+The production Web successfully returned Worker heartbeat data written through the shared PostgreSQL database.
+
+This proves:
+
+```text
+Worker deployment
+PostgreSQL connectivity
+Web deployment
+shared DATABASE_URL
+database writes
+database reads
+public routing
+custom domain
+trusted TLS
+```
+
+---
+
+# 19. Secrets
+
+Never hardcode or commit:
+
+```text
+GitHub tokens
+Coolify API tokens
+production database passwords
+API keys
+private keys
+other credentials
+```
+
+Authentication belongs outside source code.
+
+Current locations:
+
+```text
+GitHub authentication:
+Windows GitHub CLI / credential storage
+
+Coolify authentication:
+Coolify CLI context
+
+Production DATABASE_URL:
+Coolify environment variables
+
+Local DATABASE_URL:
+disposable local development configuration
+```
+
+The generated production database password exists temporarily while the batch provisions the project and is then cleared from the batch environment.
+
+---
+
+# 20. GitHub
+
+GitHub owner:
+
+```text
+jcbuildstech
+```
+
+Professional Git identity:
+
+```text
+Juan Delgado Vivas
+jcbuildstech@gmail.com
+```
+
+New repositories are `PRIVATE` by default.
+
+A repository becomes public only when there is a reason.
+
+Before making a portfolio repository public, perform a secret/history scan.
+
+---
+
+# 21. Git Inside Dev Containers
+
+Normal Git workflow happens inside the Dev Container.
+
+VS Code forwards Git credentials from Windows.
+
+Therefore:
 
 ```bash
 git push
 ```
 
----
+works even if:
 
-# 23. ARM64
-
-The OCI server is ARM64.
-
-During deployment, Nixpacks successfully downloaded and installed ARM64/aarch64 Python tooling.
-
-The deployment logs showed an ARM64 uv wheel being installed successfully.
-
-Therefore the current Python + Nixpacks path already works on the OCI architecture.
-
-Do not add custom ARM64 build logic unless a real dependency proves it is necessary.
-
----
-
-# 24. Domains
-
-Coolify currently provides temporary public URLs using:
-
-```text
-sslip.io
+```bash
+gh auth status
 ```
 
-Typical form:
+inside the Dev Container says GitHub CLI is not logged in.
+
+Do not authenticate GitHub CLI inside every Dev Container unless a project specifically requires `gh`.
+
+---
+
+# 22. Virtual Environment
+
+The Python environment lives in:
 
 ```text
-http://<app-uuid>.<server-ip>.sslip.io
+/home/vscode/.venv
 ```
 
-This is enough for:
+configured through:
 
-> idea → live
+```text
+UV_PROJECT_ENVIRONMENT=/home/vscode/.venv
+```
 
-Custom Cloudflare domains are deliberately not automated yet.
+It intentionally does not live inside the Windows-mounted project directory.
 
-Manual Cloudflare + DNS + Traefik setup was previously a major source of deployment friction.
+If the environment is lost:
 
-Do not reintroduce that complexity until a real project needs a permanent domain.
+```bash
+uv sync
+```
 
----
+recreates it from:
 
-# 25. HTTP / HTTPS
-
-HTTP/HTTPS was initially suspected during one failed deployment.
-
-That was not the actual problem.
-
-The failure happened earlier during the build because of the Python 3.14 vs 3.12 mismatch.
-
-Lesson:
-
-> Read build/deployment logs before assuming routing, DNS, Traefik, or HTTPS is the cause.
+```text
+pyproject.toml
+uv.lock
+```
 
 ---
 
-# 26. Nixpacks vs Dev Container
+# 23. Dependency Management
 
-The Dev Container Dockerfile is for development:
+Use:
+
+```bash
+uv add requests
+uv add flask
+uv add "psycopg[binary]"
+```
+
+instead of manually managing packages with `pip`.
+
+`uv` maintains:
+
+```text
+pyproject.toml
+uv.lock
+```
+
+The Dev Container runs `uv sync` during setup.
+
+---
+
+# 24. Git Safety
+
+The Dev Container configures the current repository as a Git safe directory:
+
+```bash
+git config --global --add safe.directory "$(pwd)"
+```
+
+This solves ownership differences caused by Windows-mounted repositories.
+
+Do not replace this with:
+
+```text
+safe.directory *
+```
+
+because that disables the safety mechanism globally.
+
+---
+
+# 25. Production Build
+
+Development:
 
 ```text
 .devcontainer/Dockerfile
 ```
 
-Production deployment currently uses:
+Production:
 
 ```text
 Coolify + Nixpacks
@@ -826,147 +810,41 @@ Coolify + Nixpacks
 
 These are separate concerns.
 
-Mental model:
+Do not assume the development Dockerfile must also become the production image.
 
-```text
-.devcontainer/Dockerfile
-→ local development environment
-
-Coolify + Nixpacks
-→ production build/runtime
-```
-
-Do not assume the development Dockerfile must also be the production image.
+The current Nixpacks path is proven on the OCI ARM64 server.
 
 ---
 
-# 27. What `new_project.bat` Does
+# 26. Coolify Infrastructure
 
-Current responsibilities:
+Server UUID:
 
 ```text
-1. Determine project name from containing folder
-
-2. Copy Golden Path template
-
-3. Initialise local Git repo if missing
-
-4. Configure repository-local Git identity
-
-5. Configure push.autoSetupRemote
-
-6. Create private GitHub repo if missing
-
-7. Add GitHub origin if missing
-
-8. Search Coolify for a project with the same project name
-
-9. Reuse Coolify project if found
-
-10. Create Coolify project if missing
-
-11. Search Coolify apps for:
-    jcbuildstech/<project_name>
-
-12. Reuse Coolify app if found
-
-13. Create Coolify Web app if missing
-
-14. Leave deployment idle until first git push
-
-15. Exit clearly if setup fails
+ew0ckwcs444o4c0s4s0000so
 ```
+
+GitHub App UUID:
+
+```text
+ugwgsgowsgskc4w40ws4s0sc
+```
+
+These UUIDs are identifiers, not credentials.
+
+The Coolify API token is stored in the CLI context and must never be placed in the batch file.
+
+GitHub App repository access is configured so newly created repositories can be deployed without manually granting access each time.
 
 ---
 
-# 28. Idempotency
+# 27. Important Coolify / CLI Quirks
 
-Running `new_project.bat` twice on the same project was explicitly tested.
+Some Coolify CLI commands return incomplete-looking table output even when the operation succeeds.
 
-Test project:
+For example, creation or update commands can show a UUID while other fields appear blank.
 
-```text
-15_batch_web_test
-```
-
-After running the batch twice:
-
-```text
-Projects: 1
-Apps: 1
-```
-
-Therefore the current Web bootstrap reuses existing Coolify resources rather than silently duplicating them.
-
-Do not remove the lookup/reuse logic casually.
-
----
-
-# 29. Important Batch Implementation Detail
-
-An early implementation attempted to capture PowerShell output directly through:
-
-```bat
-for /f ...
-```
-
-When no Coolify resource existed, the command unexpectedly produced/captured a single space:
-
-```text
-UUID=[ ]
-RESULT=DEFINED
-```
-
-This caused the batch to think a Coolify project already existed and skip creation.
-
-That direct capture method was abandoned.
-
-The proven method is now:
-
-```text
-Coolify CLI
-→ JSON temp file
-→ PowerShell reads JSON
-→ PowerShell writes UUID/NONE to temp result file
-→ batch reads result with set /p
-```
-
-It is less elegant, but it was tested and works.
-
-Do not “simplify” back to the broken direct capture approach without re-testing it.
-
----
-
-# 30. Coolify JSON Response Quirks
-
-Creating a project with:
-
-```powershell
-coolify project create --name "example" --format json
-```
-
-may return:
-
-```json
-{
-  "uuid": "...",
-  "name": ""
-}
-```
-
-The blank name does not mean creation failed.
-
-The UUID is valid.
-
-Confirm using:
-
-```powershell
-coolify project list --format json
-```
-
-Similarly, immediately after application creation, some CLI table fields may be blank.
-
-Verify later using:
+Verify using:
 
 ```powershell
 coolify app get <uuid>
@@ -978,402 +856,300 @@ or:
 coolify app list --format json
 ```
 
----
+Do not interpret blank table fields as automatic failure.
 
-# 31. Proven Test Projects
+Another proven implementation detail:
 
-## 10_github_test
+Directly capturing some Coolify JSON values through Batch `FOR /F` produced unreliable whitespace results.
 
-Used to prove:
-
-- private GitHub repo creation
-- Git credential forwarding into Dev Containers
-- Coolify private GitHub app creation
-- initial Nixpacks deployment
-- root cause of Python version mismatch
-
-## 11_python312_test
-
-Used to prove:
-
-- Golden Path source changed to Python 3.12
-- fresh Dev Container generated `requires-python >=3.12`
-- Nixpacks deployment works on OCI ARM64
-- subsequent `git push` automatically redeploys
-
-## 12_first_push_test
-
-Used to prove:
-
-> Coolify can be wired to an empty GitHub repo and automatically deploy the first-ever push.
-
-## 13_json_probe
-
-Used to inspect Coolify project-create JSON.
-
-## 14_batch_web_test
-
-Used while diagnosing the broken direct `FOR /F` capture approach.
-
-## 15_batch_web_test
-
-Final Web-path proof.
-
-The batch itself successfully:
+The current proven pattern is:
 
 ```text
-created private GitHub repo
-created Coolify project
-created Coolify application
+Coolify CLI
+-> JSON temporary file
+-> PowerShell parses JSON
+-> PowerShell writes UUID or state to result file
+-> Batch reads result with set /p
 ```
 
-Then:
-
-```text
-first git push
-→ automatic deployment
-→ live response
-```
-
-Live response:
-
-```text
-Golden Path batch deployment works!
-```
-
-Then the batch was run again and verified:
-
-```text
-Projects: 1
-Apps: 1
-```
+Do not simplify this unless the replacement is tested with a completely fresh project.
 
 ---
 
-# 32. Normal Project Workflow
+# 28. Batch Delayed Expansion
 
-Once a project exists, normal development should happen almost entirely inside VS Code / Dev Container.
+The batch uses:
 
-Example:
-
-```bash
-git status
-git add .
-git commit -m "Add feature"
-git push
+```text
+EnableDelayedExpansion
 ```
 
-That should be enough for deployment.
+because variables generated inside parenthesised Batch blocks must be read after they are assigned.
 
-Do not manually create GitHub/Coolify resources or trigger routine deployments unless something has actually broken.
+This matters particularly for:
+
+```text
+generated database password
+DATABASE_URL
+```
+
+Inside those blocks use:
+
+```text
+!VARIABLE!
+```
+
+rather than:
+
+```text
+%VARIABLE%
+```
+
+where delayed values are required.
+
+This bug was discovered through a real disposable-project test.
 
 ---
 
-# 33. Project Creation Workflow
+# 29. Failure Philosophy
 
-Expected workflow:
+Do not diagnose from assumptions.
+
+Test the failing boundary.
+
+Examples:
 
 ```text
-1. Create a folder manually
+Can Dev Container reach local PostgreSQL?
 
-C:\Users\jcdel\Root\01_PROJECTS\16_new_idea
+Can the application create a table?
 
-2. Copy new_project.bat into it
+Can the Worker write?
 
-3. Run new_project.bat
+Can Web read the same row?
 
-4. Start Docker Desktop
+Did Coolify receive DATABASE_URL?
 
-5. Open project folder in VS Code
+Did the first push deploy?
 
-6. Reopen in Dev Container
+Does the custom hostname resolve?
 
-7. Write application
-
-8. Test locally
-
-9. Commit
-
-10. git push
-
-11. Coolify deploys automatically
+Is TLS trusted?
 ```
+
+A failed test should expose the next piece of friction.
+
+Fix the Golden Path source only after the problem is understood.
 
 ---
 
-# 34. Git Line Endings
+# 30. Golden Path Development Rule
 
-Host:
-
-```text
-Windows
-```
-
-Development/runtime:
+Before changing the Golden Path:
 
 ```text
-Linux
+1. Reproduce the problem.
+2. Change the Golden Path source.
+3. Test with a completely fresh disposable project.
+4. Test locally.
+5. Test production.
+6. Test first push.
+7. Test the relevant Web / Worker / database path.
+8. Rerun new_project.bat.
+9. Verify no duplicate infrastructure was created.
+10. Commit.
+11. Push the Golden Path.
 ```
 
-Template includes:
-
-```text
-.gitattributes
-```
-
-with:
-
-```text
-* text=auto eol=lf
-```
-
-Template files were normalised to LF.
-
-The `.bat` itself may use Windows CRLF.
-
-That is fine.
+This process produced the current system.
 
 ---
 
-# 35. Secrets
+# 31. What Not to Automate
 
-Never hardcode or commit:
-
-```text
-GitHub tokens
-Coolify API token
-API keys
-passwords
-database passwords
-private keys
-```
-
-Authentication lives in:
+Do not turn the Golden Path into:
 
 ```text
-Windows credential storage
-GitHub CLI auth
-Coolify CLI context
-```
-
----
-
-# 36. Recovery on a New Machine
-
-Typical recovery:
-
-```text
-Install Git
-Install Docker Desktop
-Install VS Code
-Install GitHub CLI
-Authenticate gh
-Install Coolify CLI
-Configure Coolify context
-Clone golden-path
-Restore to:
-C:\Users\jcdel\Root\03_RESOURCES\06_GOLDEN_PATH
-```
-
-This does not need extreme automation because it should happen rarely.
-
----
-
-# 37. Coolify Upgrade / Backup Lesson
-
-Coolify was originally found on:
-
-```text
-v4.0.0-beta.452
-```
-
-Before upgrading, an OCI boot-volume backup was created.
-
-Coolify was upgraded successfully.
-
-The GitHub repository-list UUID bug remained, showing it was not simply caused by the older version.
-
-Lesson:
-
-> Before future major Coolify upgrades, create an OCI boot-volume backup.
-
----
-
-# 38. Future Runtime-Type Plan
-
-Long-term:
-
-```text
-new_project.bat
-
-What are you building?
-
-[1] Web
-[2] Worker
-```
-
-Possibly later:
-
-```text
-[3] Job
-```
-
-But options should only be added when real projects prove they are needed.
-
-Current state:
-
-```text
-Web → complete and proven
-Worker → not yet implemented
-Job → not yet implemented
-```
-
----
-
-# 39. Next Major Milestone
-
-## Worker Path
-
-Use the real:
-
-```text
-QLD Traffic Accident / Traffic Event Notification System
-```
-
-Its runtime shape is:
-
-```text
-start
-→ fetch QLD traffic data
-→ normalise
-→ compare state
-→ send ntfy notifications
-→ wait
-→ repeat
-```
-
-Questions should be answered from the real project, not pure theory:
-
-```text
-How should Coolify represent the worker?
-
-What start command should it use?
-
-Does it require an exposed port?
-
-What restart behaviour is appropriate?
-
-How should graceful shutdown work?
-
-Should polling remain an infinite loop or move to an external scheduler?
-
-How should environment variables be supplied?
-
-How should persistent state be mounted?
-```
-
----
-
-# 40. Possible Future Improvements
-
-Only add when real friction appears:
-
-```text
-Worker project type
-Scheduled-job project type
-custom Cloudflare domain automation
-environment-variable helper
-persistent storage helper
-database creation
-project-specific port
-project-specific start command
-health checks
-deployment status feedback
-one-command make-public
-project cleanup tooling
-```
-
----
-
-# 41. Things Not to Do
-
-Do not turn this into:
-
-```text
-a platform
 a framework
+a platform
 Kubernetes
 a universal deployment engine
 a giant abstraction layer
 a DevOps hobby project
 ```
 
-The Golden Path exists to help Juan build projects.
+Do not automate:
 
-If maintaining it starts consuming more time than building applications, the design has drifted.
+```text
+business logic
+database schema
+UI decisions
+data modelling
+application architecture beyond the default runtime plumbing
+```
+
+Those are part of doing the actual work.
 
 ---
 
-# 42. Success Criterion
+# 32. Default vs Requirement
 
-The Golden Path is successful when Juan can think:
+The Golden Path provisions:
 
-> “I want to build this.”
+```text
+Web
+Worker
+PostgreSQL
+GitHub
+Coolify
+custom domain
+```
 
-and quickly move to:
+by default.
+
+That does not mean every project intrinsically needs all of them.
+
+For the current stage of development, having the capability available is cheaper than repeatedly stopping to decide whether it might eventually be needed.
+
+Unused infrastructure can simply remain unused.
+
+The expensive resource is developer attention.
+
+---
+
+# 33. Jobs / Scheduled Processes
+
+Scheduled Job support is not currently automated.
+
+If a real project needs:
+
+```text
+cron
+scheduled imports
+daily reports
+periodic cleanup
+one-shot tasks
+```
+
+solve that requirement from the real project and then decide whether it belongs in the Golden Path.
+
+Do not implement Job support merely because it might someday be useful.
+
+---
+
+# 34. Recovery on a New Machine
+
+Basic recovery:
+
+```text
+Install Git
+Install Docker Desktop
+Install VS Code
+Install GitHub CLI
+Authenticate GitHub CLI
+Install Coolify CLI
+Configure Coolify context
+Clone golden-path
+Restore it to:
+C:\Users\jcdel\Root\03_RESOURCES\06_GOLDEN_PATH
+```
+
+Cloudflare wildcard DNS is account-side infrastructure and does not need to be recreated for every development machine.
+
+---
+
+# 35. Current Workflow
+
+The current practical workflow is:
+
+```text
+IDEA
+
+-> create outer PARA folder
+-> copy new_project.bat
+-> double-click
+-> enter project name
+-> infrastructure is provisioned
+-> open generated project folder in VS Code
+-> Reopen in Container
+-> start solving the actual problem
+-> test locally
+-> git commit
+-> git push
+-> Web + Worker deploy
+-> manually redeploy Web once when trusted TLS is needed
+-> https://<project>.jcdelgado.dev
+-> continue building
+```
+
+---
+
+# 36. Success Criterion
+
+The Golden Path succeeds when the thought:
+
+> I want to build this.
+
+can quickly become:
 
 ```text
 folder
-→ batch
-→ Dev Container
-→ code
-→ push
-→ live
+-> batch
+-> infrastructure
+-> Dev Container
+-> code
+-> test
+-> push
+-> live
 ```
 
-without needing to remember deployment plumbing.
+without needing to remember the deployment plumbing.
 
 ---
 
-# 43. Current Milestone
+# 37. Current Milestone
 
-## WEB PATH — COMPLETE AND PROVEN
+## COMPLETE PRODUCT INFRASTRUCTURE PATH — PROVEN
 
-Current milestone files:
-
-```text
-new_project.bat
-template/.devcontainer/Dockerfile
-README.md
-```
-
-Next milestone:
+Proven:
 
 ```text
-WORKER PATH
+validated project naming
+PARA outer folder separation
+Dev Container
+Python 3.12
+uv
+local PostgreSQL
+private GitHub repository
+Coolify project
+production PostgreSQL
+Web application
+Worker application
+shared DATABASE_URL
+automatic deployment on push
+wildcard DNS
+automatic permanent Web hostname
+trusted HTTPS after one Web redeploy
+full Worker -> PostgreSQL -> Web production data path
+idempotent reruns
 ```
+
+The Golden Path should now remain stable until a real project exposes new friction.
 
 ---
 
-# 44. Message to Future Juan / Future Assistant
+# 38. Message to Future Juan / Future Assistant
 
-Before changing the Golden Path:
-
-1. Read this README.
-2. Check Git history.
-3. Reproduce the problem before changing anything.
-4. Change the Golden Path source, not only the affected project.
-5. Test with a completely fresh disposable project.
-6. Test first push.
-7. Test subsequent push.
-8. Test rerunning the batch.
-9. Verify no duplicate GitHub/Coolify resources were created.
-10. Only then commit the Golden Path change.
-
-Most importantly:
-
-> **Do not optimise this system for imagined future complexity.**
-
-The rule remains:
+The current system was built by following one rule:
 
 > **Improve the path only when real projects expose friction.**
+
+Do not redesign it because a theoretically cleaner architecture exists.
+
+Do not add complexity merely because automation is possible.
+
+Do not confuse infrastructure automation with doing the actual work.
+
+The Golden Path should make starting cheap.
+
+The project itself is where the hard work belongs.
