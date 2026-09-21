@@ -12,6 +12,7 @@ for %%I in ("%TARGET%") do set "PROJECT_NAME=%%~nxI"
 
 set "REPO=%GITHUB_OWNER%/%PROJECT_NAME%"
 set "DATABASE_NAME=%PROJECT_NAME%-postgres"
+set "WORKER_NAME=%PROJECT_NAME%-worker"
 set "DATABASE_WAS_CREATED=0"
 set "DB_PASSWORD="
 
@@ -213,7 +214,7 @@ if ERRORLEVEL 1 (
     exit /b 1
 )
 
-powershell -NoProfile -Command "$apps = Get-Content -Raw $env:JSON_FILE | ConvertFrom-Json; $match = $apps | Where-Object { $_.git_repository -eq $env:REPO } | Select-Object -First 1; if ($match) { [IO.File]::WriteAllText($env:RESULT_FILE,[string]$match.uuid) } else { [IO.File]::WriteAllText($env:RESULT_FILE,'NONE') }"
+powershell -NoProfile -Command "$apps = Get-Content -Raw $env:JSON_FILE | ConvertFrom-Json; $match = $apps | Where-Object { $_.git_repository -eq $env:REPO -and $_.name -eq $env:PROJECT_NAME } | Select-Object -First 1; if ($match) { [IO.File]::WriteAllText($env:RESULT_FILE,[string]$match.uuid) } else { [IO.File]::WriteAllText($env:RESULT_FILE,'NONE') }"
 
 if ERRORLEVEL 1 (
     echo.
@@ -309,6 +310,116 @@ if "%DATABASE_URL_STATE%"=="NONE" (
     if ERRORLEVEL 1 (
         echo.
         echo ERROR: Could not wire DATABASE_URL to Coolify application.
+        pause
+        exit /b 1
+    )
+)
+
+rem --------------------------------------------------
+rem Find or create Coolify Worker application
+rem --------------------------------------------------
+
+echo Creating worker application...
+
+coolify app list --format json > "%JSON_FILE%"
+
+if ERRORLEVEL 1 (
+    echo.
+    echo ERROR: Could not read Coolify applications for Worker.
+    pause
+    exit /b 1
+)
+
+powershell -NoProfile -Command "$apps = Get-Content -Raw $env:JSON_FILE | ConvertFrom-Json; $match = $apps | Where-Object { $_.git_repository -eq $env:REPO -and $_.name -eq $env:WORKER_NAME } | Select-Object -First 1; if ($match) { [IO.File]::WriteAllText($env:RESULT_FILE,[string]$match.uuid) } else { [IO.File]::WriteAllText($env:RESULT_FILE,'NONE') }"
+
+if ERRORLEVEL 1 (
+    echo.
+    echo ERROR: Could not inspect Coolify Worker applications.
+    pause
+    exit /b 1
+)
+
+set /p COOLIFY_WORKER_UUID=<"%RESULT_FILE%"
+
+if "%COOLIFY_WORKER_UUID%"=="NONE" (
+    coolify app create github ^
+        --server-uuid "%COOLIFY_SERVER_UUID%" ^
+        --project-uuid "%COOLIFY_PROJECT_UUID%" ^
+        --environment-name production ^
+        --github-app-uuid "%COOLIFY_GITHUB_APP_UUID%" ^
+        --git-repository "%REPO%" ^
+        --git-branch main ^
+        --build-pack nixpacks ^
+        --ports-exposes 8001 ^
+        --start-command "python worker.py" ^
+        --name "%WORKER_NAME%" ^
+        --format json > "%JSON_FILE%"
+
+    if ERRORLEVEL 1 (
+        echo.
+        echo ERROR: Coolify Worker creation failed.
+        pause
+        exit /b 1
+    )
+
+    powershell -NoProfile -Command "$data = Get-Content -Raw $env:JSON_FILE | ConvertFrom-Json; [IO.File]::WriteAllText($env:RESULT_FILE,[string]$data.uuid)"
+
+    if ERRORLEVEL 1 (
+        echo.
+        echo ERROR: Could not read Worker UUID.
+        pause
+        exit /b 1
+    )
+
+    set /p COOLIFY_WORKER_UUID=<"%RESULT_FILE%"
+)
+
+if not defined COOLIFY_WORKER_UUID (
+    echo.
+    echo ERROR: Could not determine Worker UUID.
+    pause
+    exit /b 1
+)
+
+rem --------------------------------------------------
+rem Wire production PostgreSQL to Worker
+rem --------------------------------------------------
+
+coolify app env list "%COOLIFY_WORKER_UUID%" --format json > "%JSON_FILE%"
+
+if ERRORLEVEL 1 (
+    echo.
+    echo ERROR: Could not read Worker environment variables.
+    pause
+    exit /b 1
+)
+
+powershell -NoProfile -Command "$vars = Get-Content -Raw $env:JSON_FILE | ConvertFrom-Json; $match = $vars | Where-Object { $_.key -eq 'DATABASE_URL' } | Select-Object -First 1; if ($match) { [IO.File]::WriteAllText($env:RESULT_FILE,'EXISTS') } else { [IO.File]::WriteAllText($env:RESULT_FILE,'NONE') }"
+
+set /p WORKER_DATABASE_URL_STATE=<"%RESULT_FILE%"
+
+if "%WORKER_DATABASE_URL_STATE%"=="NONE" (
+    if "%DATABASE_WAS_CREATED%"=="0" (
+        echo.
+        echo ERROR: Existing PostgreSQL found but Worker DATABASE_URL is missing.
+        pause
+        exit /b 1
+    )
+
+    if not defined DATABASE_URL (
+        set "DATABASE_URL=postgresql://app:!DB_PASSWORD!@!COOLIFY_DB_UUID!:5432/app"
+    )
+
+    coolify app env create "%COOLIFY_WORKER_UUID%" ^
+        --key "DATABASE_URL" ^
+        --value "!DATABASE_URL!" ^
+        --is-literal ^
+        --build-time=false ^
+        --runtime=true >nul
+
+    if ERRORLEVEL 1 (
+        echo.
+        echo ERROR: Could not wire DATABASE_URL to Worker.
         pause
         exit /b 1
     )
